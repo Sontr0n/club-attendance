@@ -1,0 +1,79 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Member {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  slackUserId String?
+  createdAt   DateTime @default(now())
+
+  attendance       AttendanceRecord[]
+  absenceRequests  AbsenceRequest[]
+  strikes          Strike[]
+}
+
+model Event {
+  id                  String    @id @default(cuid())
+  title               String
+  type                String    // "MEETING" | "SOCIAL"
+  startsAt            DateTime
+  endsAt              DateTime
+  secretPassword      String?   // required for MEETING events
+  googleCalendarEventId String? @unique
+  closedAt            DateTime? // once closed, attendance is finalized and strikes assessed
+  createdAt           DateTime  @default(now())
+
+  attendance       AttendanceRecord[]
+  absenceRequests  AbsenceRequest[]
+  strikes          Strike[]
+}
+
+model AttendanceRecord {
+  id        String   @id @default(cuid())
+  memberId  String
+  eventId   String
+  status    String   // "PRESENT" | "ABSENT_EXCUSED" | "ABSENT_UNEXCUSED"
+  source    String   // "PASSWORD" | "ADMIN_MANUAL" | "APPROVED_ABSENCE" | "AUTO_NO_SHOW"
+  createdAt DateTime @default(now())
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, eventId])
+}
+
+model AbsenceRequest {
+  id          String    @id @default(cuid())
+  memberId    String
+  eventId     String
+  reason      String
+  status      String    // "PENDING" | "APPROVED" | "DENIED"
+  adminNotes  String?
+  submittedAt DateTime  @default(now())
+  reviewedAt  DateTime?
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, eventId])
+}
+
+model Strike {
+  id        String   @id @default(cuid())
+  memberId  String
+  eventId   String?
+  reason    String
+  number    Int      // 1 = warning, 2 = meet with board
+  issuedAt  DateTime @default(now())
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  event  Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+}
