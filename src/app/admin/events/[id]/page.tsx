@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ManualAttendance } from "./ManualAttendance";
 import { CloseEventButton } from "./CloseEventButton";
+import { EditPassword } from "./EditPassword";
 
 export const dynamic = "force-dynamic";
 
@@ -38,10 +39,9 @@ export default async function EventDetailPage({ params }: { params: { id: string
           {event.type} · {new Date(event.startsAt).toLocaleString()} – {new Date(event.endsAt).toLocaleString()}
           {event.closedAt && " · CLOSED"}
         </p>
-        {event.type === "MEETING" && event.secretPassword && !event.closedAt && (
-          <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
-            <span className="text-slate-500">Secret password:</span>
-            <span className="font-mono font-semibold">{event.secretPassword}</span>
+        {event.type === "MEETING" && !event.closedAt && (
+          <div className="mt-3">
+            <EditPassword eventId={event.id} current={event.secretPassword} />
           </div>
         )}
       </div>

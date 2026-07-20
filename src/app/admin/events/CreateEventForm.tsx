@@ -75,7 +75,7 @@ export function CreateEventForm() {
       <button
         type="submit"
         disabled={pending}
-        className="sm:col-span-1 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow hover:bg-slate-800 disabled:opacity-50"
+        className="sm:col-span-1 rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-violet-700 disabled:opacity-50"
       >
         {pending ? "Saving…" : "Create"}
       </button>
