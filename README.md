@@ -1,6 +1,6 @@
 # Club Attendance
 
-A small web app to track attendance for your club. Members submit two kinds of
+A small web app to track attendance for my consulting club. Members submit two kinds of
 forms (mark-present and absence-request); the admin handles everything else.
 
 ## What's in here
