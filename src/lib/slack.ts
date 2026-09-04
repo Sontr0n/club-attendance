@@ -11,7 +11,7 @@ export async function sendStrikeNotification(params: {
   memberName: string;
   strikeNumber: number;
   reason: string;
-}) {
+}): Promise<{ status: "sent" } | { status: "stubbed" }> {
   const client = getClient();
   const { slackUserId, memberName, strikeNumber, reason } = params;
 
@@ -24,13 +24,14 @@ export async function sendStrikeNotification(params: {
     console.log(
       `[slack:stub] would DM ${slackUserId} (${memberName}) — strike #${strikeNumber}: ${reason}`
     );
-    return;
+    return { status: "stubbed" };
   }
 
   await client.chat.postMessage({
     channel: slackUserId,
     text: body,
   });
+  return { status: "sent" };
 }
 
 export async function lookupSlackUserByEmail(email: string): Promise<string | null> {

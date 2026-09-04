@@ -55,11 +55,20 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       },
       update: { status: "ABSENT_UNEXCUSED" },
     });
-    await issueStrike({
+    const result = await issueStrike({
       memberId: request.memberId,
       eventId: request.eventId,
       reason: "Absence request denied",
     });
+
+    if (result.issued && result.notify.status !== "sent") {
+      return NextResponse.json({
+        ok: true,
+        notify: result.notify.status,
+        message:
+          "Absence denied and strike recorded, but the member was not notified on Slack. Let them know another way.",
+      });
+    }
   }
 
   return NextResponse.json({ ok: true });

@@ -16,9 +16,11 @@ export function ReviewForm({ requestId }: { requestId: string }) {
       body: JSON.stringify({ decision, adminNotes: notes || undefined }),
     });
     setPending(null);
-    if (res.ok) router.refresh();
-    else {
-      const data = await res.json().catch(() => ({}));
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      if (data.message) alert(data.message);
+      router.refresh();
+    } else {
       alert(data.message ?? "Failed.");
     }
   }

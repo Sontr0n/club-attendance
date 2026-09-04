@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ClearStrikeButton } from "./ClearStrikeButton";
+import { IssueStrikeForm } from "./IssueStrikeForm";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,12 @@ export default async function MemberDetailPage({ params }: { params: { id: strin
     },
   });
   if (!member) notFound();
+
+  const recentEvents = await prisma.event.findMany({
+    orderBy: { startsAt: "desc" },
+    take: 25,
+    select: { id: true, title: true, startsAt: true },
+  });
 
   return (
     <div className="space-y-8">
@@ -56,6 +63,24 @@ export default async function MemberDetailPage({ params }: { params: { id: strin
               ))}
             </ul>
           )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Issue a strike manually
+        </h2>
+        <div className="mt-3 rounded-lg border border-slate-200 bg-white p-4">
+          <IssueStrikeForm
+            memberId={member.id}
+            memberName={member.name}
+            atCap={member.strikes.length >= 2}
+            events={recentEvents.map((e) => ({
+              id: e.id,
+              title: e.title,
+              startsAt: e.startsAt.toISOString(),
+            }))}
+          />
         </div>
       </section>
 

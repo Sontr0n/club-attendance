@@ -19,7 +19,11 @@ export function CloseEventButton({ eventId }: { eventId: string }) {
     const data = await res.json();
     setPending(false);
     if (res.ok) {
-      alert(`Closed. ${data.noShows} no-show strike(s) issued.`);
+      const failures: string[] = data.notifyFailures ?? [];
+      const warning = failures.length
+        ? `\n\n⚠️ Slack DM did not reach ${failures.length} member(s): ${failures.join(", ")}. Notify them another way.`
+        : "";
+      alert(`Closed. ${data.noShows} no-show strike(s) issued.${warning}`);
       router.refresh();
     } else {
       alert(data.message ?? "Failed to close event.");
