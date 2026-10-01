@@ -19,7 +19,8 @@ export default function HomePage() {
         >
           <div className="text-lg font-semibold text-violet-950">I&apos;m at a meeting</div>
           <p className="mt-1 text-sm text-slate-600">
-            Enter the secret password to be marked present.
+            Enter the secret password to be marked present. Open until midnight the night of the
+            event.
           </p>
         </Link>
 

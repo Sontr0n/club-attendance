@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { ManualAttendance } from "./ManualAttendance";
 import { CloseEventButton } from "./CloseEventButton";
 import { EditPassword } from "./EditPassword";
+import { attendanceDeadline, formatInClubTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,10 @@ export default async function EventDetailPage({ params }: { params: { id: string
     request: m.absenceRequests[0] ?? null,
   }));
 
-  const ended = event.endsAt < new Date();
+  const now = new Date();
+  const ended = event.endsAt < now;
+  const deadline = attendanceDeadline(event);
+  const checkInStillOpen = event.type === "MEETING" && now <= deadline;
 
   return (
     <div className="space-y-8">
@@ -40,20 +44,37 @@ export default async function EventDetailPage({ params }: { params: { id: string
           {event.closedAt && " · CLOSED"}
         </p>
         {event.type === "MEETING" && !event.closedAt && (
-          <div className="mt-3">
+          <div className="mt-3 space-y-2">
             <EditPassword eventId={event.id} current={event.secretPassword} />
+            <p className="text-xs text-slate-500">
+              Members can check in until {formatInClubTime(deadline)}.
+            </p>
           </div>
         )}
       </div>
 
       {ended && !event.closedAt && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
-          <div className="font-medium text-amber-900">This event has ended.</div>
-          <p className="mt-1 text-sm text-amber-800">
-            Close it out to mark anyone with no record as an unexcused no-show and issue strikes.
-          </p>
+        <div
+          className={`rounded-lg border p-4 ${
+            checkInStillOpen ? "border-amber-300 bg-amber-50" : "border-violet-300 bg-violet-50"
+          }`}
+        >
+          <div className={`font-medium ${checkInStillOpen ? "text-amber-900" : "text-violet-950"}`}>
+            This event has ended.
+          </div>
+          {checkInStillOpen ? (
+            <p className="mt-1 text-sm text-amber-800">
+              Members can still check in until {formatInClubTime(deadline)}. Closing now would strike
+              anyone who hasn&apos;t submitted yet — wait until after the deadline unless you mean to.
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-slate-700">
+              Check-in closed at {formatInClubTime(deadline)}. Close the event to mark anyone with no
+              record as an unexcused no-show and issue strikes.
+            </p>
+          )}
           <div className="mt-3">
-            <CloseEventButton eventId={event.id} />
+            <CloseEventButton eventId={event.id} warnEarly={checkInStillOpen} />
           </div>
         </div>
       )}

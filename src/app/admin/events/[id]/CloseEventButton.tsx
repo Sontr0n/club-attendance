@@ -3,17 +3,23 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function CloseEventButton({ eventId }: { eventId: string }) {
+export function CloseEventButton({
+  eventId,
+  warnEarly = false,
+}: {
+  eventId: string;
+  warnEarly?: boolean;
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
 
   async function close() {
-    if (
-      !confirm(
-        "Close this event? Any member with no attendance record and no approved absence will get a strike."
-      )
-    )
-      return;
+    const base =
+      "Close this event? Any member with no attendance record and no approved absence will get a strike.";
+    const earlyWarning = warnEarly
+      ? "\n\n⚠️ Check-in is still open until midnight. Members who were present but haven't submitted yet will be struck unfairly."
+      : "";
+    if (!confirm(base + earlyWarning)) return;
     setPending(true);
     const res = await fetch(`/api/admin/events/${eventId}/close`, { method: "POST" });
     const data = await res.json();

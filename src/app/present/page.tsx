@@ -16,7 +16,8 @@ export default async function PresentPage() {
       </a>
       <h1 className="mt-4 text-2xl font-bold">Mark yourself present</h1>
       <p className="mt-2 text-sm text-slate-600">
-        Enter the secret password shared at this meeting.
+        Enter the secret password shared at this meeting. You have until{" "}
+        <span className="font-medium">midnight the night of the event</span> to submit.
       </p>
 
       <div className="mt-6">

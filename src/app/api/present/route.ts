@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { attendanceDeadline } from "@/lib/time";
 
 const schema = z.object({
   memberId: z.string().min(1),
@@ -21,23 +22,44 @@ export async function POST(req: Request) {
   }
 
   const now = new Date();
-  // A meeting is "active" if now is between 1h before start and end+30min.
-  const window = await prisma.event.findMany({
+  // Check-in opens 1h before a meeting starts and stays open until midnight the
+  // night of the event. The 3-day lower bound just keeps the query small; the
+  // real cutoff is attendanceDeadline(), which is timezone-aware.
+  const candidates = await prisma.event.findMany({
     where: {
       type: "MEETING",
       closedAt: null,
-      startsAt: { lte: new Date(now.getTime() + 60 * 60 * 1000) },
-      endsAt: { gte: new Date(now.getTime() - 30 * 60 * 1000) },
+      startsAt: {
+        lte: new Date(now.getTime() + 60 * 60 * 1000),
+        gte: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
+      },
     },
   });
 
-  const matched = window.find(
+  const open = candidates.filter((e) => now <= attendanceDeadline(e));
+
+  const matched = open.find(
     (e) => e.secretPassword && e.secretPassword.trim().toLowerCase() === password.trim().toLowerCase()
   );
 
   if (!matched) {
+    // Distinguish "right password, too late" from "wrong password" so members
+    // who miss the deadline get an answer they can act on.
+    const expired = candidates.find(
+      (e) =>
+        e.secretPassword &&
+        e.secretPassword.trim().toLowerCase() === password.trim().toLowerCase()
+    );
+    if (expired) {
+      return NextResponse.json(
+        {
+          message: `Check-in for ${expired.title} closed at midnight on the night of the event. Submit an absence form or talk to the board.`,
+        },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { message: "No active meeting matches that password right now." },
+      { message: "No open meeting matches that password right now." },
       { status: 400 }
     );
   }
